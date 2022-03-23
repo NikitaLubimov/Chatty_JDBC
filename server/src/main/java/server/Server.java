@@ -13,10 +13,13 @@ public class Server {
 
     private List<ClientHandler> clients;
     private AuthService authService;
+    private DataBaseAuthService dataBaseAuthService;
+
 
     public Server() {
         clients = new CopyOnWriteArrayList<>();
-        authService = new SimpleAuthService();
+        authService = new DataBaseAuthService();
+
 
         try {
             server = new ServerSocket(PORT);
@@ -38,6 +41,7 @@ public class Server {
             }
             try {
                 server.close();
+                dataBaseAuthService.disconnect();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -104,4 +108,5 @@ public class Server {
     public AuthService getAuthService() {
         return authService;
     }
+
 }
