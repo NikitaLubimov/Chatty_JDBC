@@ -6,6 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.sql.SQLException;
 
 public class ClientHandler {
     private Server server;
@@ -16,6 +17,7 @@ public class ClientHandler {
     private boolean authenticated;
     private String nickname;
     private String login;
+    private DataBaseAuthService dataBaseAuthService;
 
     public ClientHandler(Server server, Socket socket) {
         try {
@@ -89,13 +91,12 @@ public class ClientHandler {
                                 }
                                 server.privateMsg(this, token[1], token[2]);
                             }
-
                         } else {
                             server.broadcastMsg(this, str);
                         }
                     }
                     //SocketTimeoutException
-                } catch (IOException e) {
+                } catch (IOException | SQLException | ClassNotFoundException e) {
                     e.printStackTrace();
                 } finally {
                     server.unsubscribe(this);
