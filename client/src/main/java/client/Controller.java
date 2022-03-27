@@ -23,6 +23,9 @@ import java.net.Socket;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ResourceBundle;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Controller implements Initializable {
     @FXML
@@ -55,6 +58,7 @@ public class Controller implements Initializable {
     private Stage stage;
     private Stage regStage;
     private RegController regController;
+    private ExecutorService service;
 
     public void setAuthenticated(boolean authenticated) {
         this.authenticated = authenticated;
@@ -97,8 +101,9 @@ public class Controller implements Initializable {
             socket = new Socket(ADDRESS, PORT);
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
+            service = Executors.newSingleThreadExecutor();
 
-            new Thread(() -> {
+            service.execute(() -> {
                 try {
                     //цикл аутентификации
                     while (true) {
@@ -154,10 +159,14 @@ public class Controller implements Initializable {
                         e.printStackTrace();
                     }
                 }
-            }).start();
+            });
 
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            if (service != null) {
+                service.shutdown();
+            }
         }
     }
 
@@ -264,7 +273,7 @@ public class Controller implements Initializable {
         }
     }
 
-    public void printStory (String login) {
+    public void printStory(String login) {
         try {
             fin = new FileInputStream("client/1/history_" + login + ".txt");
             byte[] buf = new byte[20];
