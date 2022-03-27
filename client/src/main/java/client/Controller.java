@@ -3,7 +3,6 @@ package client;
 import constants.Command;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -18,14 +17,11 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.stage.WindowEvent;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.net.URL;
-import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
@@ -50,6 +46,9 @@ public class Controller implements Initializable {
 
     private DataInputStream in;
     private DataOutputStream out;
+    private FileOutputStream fout;
+    private FileInputStream fin;
+    private String login;
 
     private boolean authenticated;
     private String nickname;
@@ -112,9 +111,10 @@ public class Controller implements Initializable {
                             if (str.startsWith(Command.AUTH_OK)) {
                                 nickname = str.split(" ")[1];
                                 setAuthenticated(true);
+                                printStory(login);
                                 break;
                             }
-                            if(str.equals("/reg_ok") || str.equals("/reg_no")){
+                            if (str.equals("/reg_ok") || str.equals("/reg_no")) {
                                 regController.result(str);
                             }
                         } else {
@@ -141,6 +141,7 @@ public class Controller implements Initializable {
                             }
                         } else {
                             textArea.appendText(str + "\n");
+                            outMsgToStory(str + "\n", login);
                         }
                     }
                 } catch (IOException e) {
@@ -153,7 +154,6 @@ public class Controller implements Initializable {
                         e.printStackTrace();
                     }
                 }
-
             }).start();
 
         } catch (Exception e) {
@@ -177,6 +177,7 @@ public class Controller implements Initializable {
             connect();
         }
 
+        login = loginField.getText().trim();
         String msg = String.format("/auth %s %s", loginField.getText().trim(), passwordField.getText().trim());
         passwordField.clear();
 
@@ -242,6 +243,37 @@ public class Controller implements Initializable {
 
         try {
             out.writeUTF(msg);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void outMsgToStory(String str, String login) {
+        try {
+            fout = new FileOutputStream("client/1/history_" + login + ".txt", true);
+            byte[] b = str.getBytes(StandardCharsets.UTF_8);
+            fout.write(b);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                fout.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void printStory (String login) {
+        try {
+            fin = new FileInputStream("client/1/history_" + login + ".txt");
+            byte[] buf = new byte[20];
+            int x;
+            while ((x = fin.read(buf)) > 0) {
+                for (int i = 0; i < x; i++) {
+                    textArea.appendText(String.valueOf((char) buf[i]));
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
