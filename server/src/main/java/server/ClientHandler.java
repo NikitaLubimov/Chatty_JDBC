@@ -7,6 +7,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.sql.SQLException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ClientHandler {
     private Server server;
@@ -18,6 +20,7 @@ public class ClientHandler {
     private String nickname;
     private String login;
     private DataBaseAuthService dataBaseAuthService;
+    private ExecutorService service;
 
     public ClientHandler(Server server, Socket socket) {
         try {
@@ -26,8 +29,9 @@ public class ClientHandler {
 
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
+            service = Executors.newSingleThreadExecutor();
 
-            new Thread(() -> {
+            service.execute(() -> {
                 try {
                     //цикл аутентификации
                     while (true) {
@@ -107,11 +111,13 @@ public class ClientHandler {
                         e.printStackTrace();
                     }
                 }
-
-            }).start();
-
+            });
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            if (service != null) {
+                service.shutdown();
+            }
         }
     }
 
